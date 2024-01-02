@@ -1,0 +1,72 @@
+#---------------------------------------------------Webcrawler-----------------------------------------------------#
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service 
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+import requests
+import time
+
+def trip_webcrawler():
+
+    ua = UserAgent()
+    user_agent=ua.random
+
+    opts = Options()
+    opts.add_argument("user_agent")
+    opts.add_argument("--disable-notifications")
+    opts.add_argument("--headless")
+    
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=opts)
+    url = "https://tc.trip.com/"
+    driver.get(url)
+    driver.implicitly_wait(5)
+
+    #ticket type
+    ticket = driver.find_element(By.XPATH, "/html/body/div/div[2]/div[2]/div/div[2]/div/div[1]/ul/li[2]/span")
+    ticket.click()
+
+    #one way
+    one_way = driver.find_element(By.XPATH, "//*[@id='searchBoxCon']/div/div/form/div/div[1]/div[1]/div[1]/div[1]")
+    one_way.click()
+    one_way = driver.find_element(By.XPATH, "//*[@id='searchBoxCon']/div[2]/div/form/div/div[1]/div[1]/div[1]/div[2]/ul/li[1]")
+    one_way.click()
+
+    #user departure
+    departure = driver.find_element(By.XPATH,"//*[@id='searchBoxCon']/div[2]/div/form/div/div[2]/div[1]/ul/li[1]/div[2]/div[1]/div/div/div/div/input") 
+    departure.click()
+    departure.clear()
+    departure.send_keys("台灣")
+
+    #user destination
+    delete = driver.find_element(By.XPATH,"//*[@id='searchBoxCon']/div[2]/div/form/div/div[2]/div[1]/ul/li[1]/div[2]/div[3]/div/div/div/div/input")
+    delete.click()
+    destination = driver.find_element(By.XPATH,"//*[@id='searchBoxCon']/div[2]/div/form/div/div[2]/div[1]/ul/li[1]/div[2]/div[3]/div/div/div/div/input") 
+    destination.click()
+    destination.clear()
+    destination.send_keys("新加坡")
+    time.sleep(3)
+    destination.send_keys(Keys.CONTROL,'\ue007')
+
+    #submit
+    button = driver.find_element(By.XPATH,"//*[@id='searchBoxCon']/div[2]/div/form/div/div[2]/div[2]/span")
+    button.click()
+    time.sleep(10)
+    
+    new_url = driver.current_url
+    n_driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=opts)
+    n_driver.get(new_url)
+
+    #find lowest price
+    lowest_price = n_driver.find_element(By.XPATH,"//*[@id='main']/div[2]/div[5]/div[1]/div[1]/div[4]/div[1]/div[1]/div/div[2]/div[2]")
+    lowest_price = lowest_price.text
+    driver.close()
+    n_driver.close()
+    return lowest_price
+
+trip_price = trip_webcrawler()
